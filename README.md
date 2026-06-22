@@ -1,7 +1,7 @@
 # Ensiklopedia Interaktif Sejarah Kekaisaran Bizantium
 
 Ensiklopedia digital interaktif ini menyajikan informasi komprehensif mengenai sejarah Kekaisaran Romawi Timur (Bizantium) dari tahun 330 M hingga kejatuhannya pada tahun 1453 M. Situs web ini dirancang dengan estetika premium bergaya kekaisaran Romawi Timur, menggunakan kombinasi warna ungu istana (imperial purple) dan emas metalik.
-LIVE PREVIEW: https://alfi190.github.io/byzn/
+LIVE PREVIEW: https://alfi190.github.io/byzantine_net/
 
 ## Fitur Utama
 
