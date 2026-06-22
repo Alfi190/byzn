@@ -754,13 +754,15 @@
         let spouseNodes = "";
         if (emp.familyTree.spouse && emp.familyTree.spouse !== "Tidak menikah" && emp.familyTree.spouse !== "Tidak diketahui" && emp.familyTree.spouse !== "Tidak ada" && emp.familyTree.spouse !== "-") {
           const spouses = emp.familyTree.spouse.split(/,|\b&\b|\bdan\b/);
-          spouseNodes = spouses.map(sp => {
+          const spouseBoxes = spouses.map(sp => {
             const trimmed = sp.trim();
             if (!trimmed) return "";
-            return `<div class="family-tree-spouse-connector"></div>` + this.renderFamilyNode(trimmed, "Pasangan", false, emp);
+            return this.renderFamilyNode(trimmed, "Pasangan", false, emp);
           }).filter(html => html !== "").join("");
+          spouseNodes = `<div class="family-tree-spouse-connector"></div><div class="family-tree-spouse-column">${spouseBoxes}</div>`;
         } else {
-          spouseNodes = `<div class="family-tree-spouse-connector"></div>` + this.renderFamilyNode(emp.familyTree.spouse || "Tidak menikah", "Pasangan", false, emp);
+          const spouseBox = this.renderFamilyNode(emp.familyTree.spouse || "Tidak menikah", "Pasangan", false, emp);
+          spouseNodes = `<div class="family-tree-spouse-connector"></div><div class="family-tree-spouse-column">${spouseBox}</div>`;
         }
 
         const childrenNodes = this.renderFamilyRow(emp.familyTree.children, "Anak-Anak", emp);

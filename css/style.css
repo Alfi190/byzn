@@ -1993,19 +1993,25 @@ mark.search-highlight {
   flex-direction: column;
   align-items: center;
   gap: 1.25rem;
-  margin: 1.5rem 0;
-  padding: 1.5rem;
+  margin: 1rem 0;
+  padding: 1.2rem 0.5rem;
   background: rgba(var(--color-purple-rgb), 0.03);
   border: 1px solid var(--border-color);
   border-radius: 12px;
+  width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 
 .family-tree-row {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
-  width: 100%;
+  gap: 1rem;
+  width: max-content;
+  min-width: 100%;
+  box-sizing: border-box;
 }
 
 .family-tree-connector-v {
@@ -2013,16 +2019,17 @@ mark.search-highlight {
   height: 20px;
   background: var(--color-gold);
   margin: 0 auto;
+  flex-shrink: 0;
 }
 
 .family-tree-node {
   background: var(--bg-card);
   border: 1.5px solid var(--border-color);
   border-radius: 8px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8rem;
-  min-width: 120px;
-  max-width: 160px;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.75rem;
+  min-width: 100px;
+  max-width: 130px;
   text-align: center;
   box-shadow: var(--shadow-sm);
   transition: all var(--transition-speed);
@@ -2031,6 +2038,8 @@ mark.search-highlight {
   align-items: center;
   justify-content: center;
   color: var(--text-primary);
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .family-tree-node.active {
@@ -2080,4 +2089,12 @@ mark.search-highlight {
   width: 20px;
   height: 2px;
   background: var(--color-gold);
+  flex-shrink: 0;
+}
+
+.family-tree-spouse-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
