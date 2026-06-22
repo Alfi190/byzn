@@ -8,79 +8,19 @@
     getDynastyName,
     getStatusBadgeClass,
     formatReignLength,
-    findEmperorByName
+    findEmperorByName,
+    escapeHTML,
+    getEmperorSVG
   } = window.BizUtils;
 
-  // Geographic coordinate boundaries for Byzantine regions
-  const REGION_COORDS = {
-    balkans: [
-      [45.5, 14.5], [45.0, 20.0], [44.0, 22.5], [43.8, 28.5], [41.2, 29.2],
-      [40.8, 29.2], [40.0, 26.2], [38.0, 24.5], [36.3, 23.0], [36.8, 21.6],
-      [39.0, 20.8], [41.5, 19.4], [44.5, 14.8]
-    ],
-    anatolia: [
-      [40.2, 26.2], [41.2, 29.0], [41.5, 32.0], [41.0, 37.5], [40.0, 42.0],
-      [38.0, 41.5], [37.0, 38.0], [36.5, 35.8], [36.0, 33.0], [36.8, 28.2],
-      [38.5, 27.0]
-    ],
-    levant: [
-      [36.5, 35.8], [36.5, 38.0], [34.5, 37.0], [31.8, 36.0], [30.8, 35.5],
-      [30.8, 34.2], [32.8, 35.0], [34.5, 35.8]
-    ],
-    egypt: [
-      [31.5, 29.8], [31.6, 32.5], [30.0, 32.8], [29.0, 31.0], [29.0, 29.5],
-      [31.0, 29.5]
-    ],
-    italy: [
-      [45.8, 12.0], [45.6, 13.5], [44.0, 12.5], [42.5, 14.2], [40.6, 18.0],
-      [39.8, 18.4], [38.0, 15.6], [36.7, 15.1], [37.8, 12.5], [38.2, 13.5],
-      [41.2, 13.8], [41.9, 12.4], [44.0, 10.0], [44.5, 9.0]
-    ],
-    nafrica: [
-      [36.8, -1.0], [37.2, 7.5], [37.3, 9.8], [36.8, 10.3], [35.0, 11.0],
-      [33.5, 11.5], [33.0, 11.5], [34.0, 7.0], [35.0, 2.0]
-    ],
-    spain: [
-      [37.2, -6.5], [38.2, -1.0], [36.5, -2.0], [36.2, -5.3], [36.5, -6.2]
-    ]
-  };
-
-  // Geographic coordinates for main cities
-  const CITY_COORDS = {
-    "Konstantinopel": [41.0082, 28.9784],
-    "Roma": [41.9028, 12.4964],
-    "Ravenna": [44.4183, 12.2035],
-    "Kartago": [36.8524, 10.3230],
-    "Aleksandria": [31.2001, 29.9187],
-    "Antiokhia": [36.2023, 36.1613],
-    "Yerusalem": [31.7683, 35.2137],
-    "Bari": [41.1171, 16.8719],
-    "Mystras (Morea)": [37.0667, 22.3667],
-    "Ohrid": [41.1172, 20.8016],
-    "Nicaea": [40.4286, 29.7214],
-    "Thessaloniki": [40.6401, 22.9444],
-    "Efesus": [37.9390, 27.3413],
-    "Sirakusa": [37.0755, 15.2866],
-    "Spanyol Selatan": [37.2, -4.5]
+  // Leaflet Map tile URLs constant
+  const TILE_URLS = {
+    dark: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    light: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
   };
 
   // View template cache memory
   const templateCache = new Map();
-
-  // HTML escaping helper to prevent XSS
-  function escapeHTML(str) {
-    if (!str) return "";
-    return str.toString().replace(/[&<>'"]/g, (tag) => {
-      const chars = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-      };
-      return chars[tag] || tag;
-    });
-  }
 
   // Async helper to load template views from /views folder
   async function loadView(viewName) {
@@ -1137,12 +1077,10 @@
         const map = App.state.leafletMap;
         if (!map) return;
 
-        // Update tile layer based on current theme
+        // Update tile layer based on current theme using centralized TILE_URLS
         const isDark = document.documentElement.getAttribute("data-theme") === "dark";
         if (App.state.tileLayer) {
-          const tileUrl = isDark 
-            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+          const tileUrl = isDark ? TILE_URLS.dark : TILE_URLS.light;
           App.state.tileLayer.setUrl(tileUrl);
         }
 
@@ -1152,34 +1090,15 @@
         });
         App.state.activeLayers = [];
 
-        // Determine which regions are active
-        const activeRegionKeys = [];
-        if (data.svgKey === "c4") {
-          activeRegionKeys.push("balkans", "anatolia", "levant", "egypt");
-        } else if (data.svgKey === "c6") {
-          activeRegionKeys.push("balkans", "anatolia", "levant", "egypt", "italy", "nafrica", "spain");
-        } else if (data.svgKey === "c8") {
-          activeRegionKeys.push("balkans", "anatolia");
-        } else if (data.svgKey === "c11") {
-          activeRegionKeys.push("balkans", "anatolia");
-        } else if (data.svgKey === "c13") {
-          activeRegionKeys.push("balkans", "anatolia");
-        } else if (data.svgKey === "c15") {
-          activeRegionKeys.push("balkans");
-        }
+        // Determine which regions are active (data-driven)
+        const activeRegionKeys = data.activeRegions || [];
 
         // Draw Polygons for active regions
         const pathColor = data.byzantiumPathColor || "rgba(138, 43, 226, 0.75)";
-        
-        let opacity = 0.5;
-        if (data.svgKey === "c13") {
-          opacity = 0.3;
-        } else if (data.svgKey === "c15") {
-          opacity = 0.15;
-        }
+        const opacity = data.opacity !== undefined ? data.opacity : 0.5;
 
         activeRegionKeys.forEach((key) => {
-          const coords = REGION_COORDS[key];
+          const coords = window.REGION_COORDS[key];
           if (coords) {
             const polygon = L.polygon(coords, {
               color: "#C59B27",
@@ -1200,7 +1119,7 @@
         });
 
         data.highlights.forEach((cityName) => {
-          const coords = CITY_COORDS[cityName];
+          const coords = window.CITY_COORDS[cityName];
           if (coords) {
             const marker = L.marker(coords, { icon: customIcon })
               .bindTooltip(cityName, {

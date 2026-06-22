@@ -1,5 +1,58 @@
 // js/data.js
 
+// Geographic coordinate boundaries for Byzantine regions
+const REGION_COORDS = {
+  balkans: [
+    [45.5, 14.5], [45.0, 20.0], [44.0, 22.5], [43.8, 28.5], [41.2, 29.2],
+    [40.8, 29.2], [40.0, 26.2], [38.0, 24.5], [36.3, 23.0], [36.8, 21.6],
+    [39.0, 20.8], [41.5, 19.4], [44.5, 14.8]
+  ],
+  anatolia: [
+    [40.2, 26.2], [41.2, 29.0], [41.5, 32.0], [41.0, 37.5], [40.0, 42.0],
+    [38.0, 41.5], [37.0, 38.0], [36.5, 35.8], [36.0, 33.0], [36.8, 28.2],
+    [38.5, 27.0]
+  ],
+  levant: [
+    [36.5, 35.8], [36.5, 38.0], [34.5, 37.0], [31.8, 36.0], [30.8, 35.5],
+    [30.8, 34.2], [32.8, 35.0], [34.5, 35.8]
+  ],
+  egypt: [
+    [31.5, 29.8], [31.6, 32.5], [30.0, 32.8], [29.0, 31.0], [29.0, 29.5],
+    [31.0, 29.5]
+  ],
+  italy: [
+    [45.8, 12.0], [45.6, 13.5], [44.0, 12.5], [42.5, 14.2], [40.6, 18.0],
+    [39.8, 18.4], [38.0, 15.6], [36.7, 15.1], [37.8, 12.5], [38.2, 13.5],
+    [41.2, 13.8], [41.9, 12.4], [44.0, 10.0], [44.5, 9.0]
+  ],
+  nafrica: [
+    [36.8, -1.0], [37.2, 7.5], [37.3, 9.8], [36.8, 10.3], [35.0, 11.0],
+    [33.5, 11.5], [33.0, 11.5], [34.0, 7.0], [35.0, 2.0]
+  ],
+  spain: [
+    [37.2, -6.5], [38.2, -1.0], [36.5, -2.0], [36.2, -5.3], [36.5, -6.2]
+  ]
+};
+
+// Geographic coordinates for main cities
+const CITY_COORDS = {
+  "Konstantinopel": [41.0082, 28.9784],
+  "Roma": [41.9028, 12.4964],
+  "Ravenna": [44.4183, 12.2035],
+  "Kartago": [36.8524, 10.3230],
+  "Aleksandria": [31.2001, 29.9187],
+  "Antiokhia": [36.2023, 36.1613],
+  "Yerusalem": [31.7683, 35.2137],
+  "Bari": [41.1171, 16.8719],
+  "Mystras (Morea)": [37.0667, 22.3667],
+  "Ohrid": [41.1172, 20.8016],
+  "Nicaea": [40.4286, 29.7214],
+  "Thessaloniki": [40.6401, 22.9444],
+  "Efesus": [37.9390, 27.3413],
+  "Sirakusa": [37.0755, 15.2866],
+  "Spanyol Selatan": [37.2, -4.5]
+};
+
 const BYZANTINE_DYNASTIES = [
   {
     id: "konstantinian",
@@ -138,92 +191,7 @@ const BYZANTINE_DYNASTIES = [
   }
 ];
 
-// Helper to generate dynamic SVG avatar coin / medallion for emperors
-function getEmperorSVG(name, dynastyId) {
-  // Hash function to get consistent colors based on name
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const colorHue = Math.abs(hash % 360);
-
-  // Custom coin details based on dynasty
-  let bgGradientStart = "#4A0E4E"; // Default Purple
-  let bgGradientEnd = "#1A001D";
-  let coinBorder = "#D4AF37"; // Gold border
-  let symbolColor = "#FFD700";
-
-  if (dynastyId === "konstantinian") {
-    bgGradientStart = "#6A1B29"; bgGradientEnd = "#300A10"; symbolColor = "#F3E5AB";
-  } else if (dynastyId === "justinian") {
-    bgGradientStart = "#2E5894"; bgGradientEnd = "#122A4E"; symbolColor = "#D4AF37";
-  } else if (dynastyId === "heraclian") {
-    bgGradientStart = "#53377A"; bgGradientEnd = "#22113A"; symbolColor = "#E6C229";
-  } else if (dynastyId === "makedonia") {
-    bgGradientStart = "#4A0E4E"; bgGradientEnd = "#230426"; symbolColor = "#FFDF00";
-  } else if (dynastyId === "komnenos") {
-    bgGradientStart = "#005C53"; bgGradientEnd = "#042940"; symbolColor = "#C5A059";
-  } else if (dynastyId === "palaiologos") {
-    bgGradientStart = "#800000"; bgGradientEnd = "#2B0000"; symbolColor = "#FDF5E6";
-  }
-
-  // Draw different emperor facial profiles / crowns based on name hash
-  const crownType = hash % 3;
-  let crownSVG = "";
-  if (crownType === 0) {
-    // Stephanos / Diadem Crown
-    crownSVG = `<path d="M40,32 C45,26 55,26 60,32 L60,37 L40,37 Z" fill="${symbolColor}" />
-                <circle cx="50" cy="24" r="3" fill="${symbolColor}" />
-                <line x1="50" y1="27" x2="50" y2="32" stroke="${symbolColor}" stroke-width="2"/>`;
-  } else if (crownType === 1) {
-    // Mural / Radiate Crown
-    crownSVG = `<path d="M38,32 L41,22 L46,28 L50,18 L54,28 L59,22 L62,32 L38,32 Z" fill="${symbolColor}" />
-                <circle cx="50" cy="16" r="2" fill="${symbolColor}" />`;
-  } else {
-    // Byzantine Dome Crown (Camelaucum)
-    crownSVG = `<path d="M40,32 C40,20 60,20 60,32 Z" fill="${symbolColor}" />
-                <rect x="38" y="30" width="24" height="4" rx="2" fill="#E5C158" />
-                <circle cx="50" cy="18" r="3" fill="#D4AF37" />
-                <path d="M42,28 L40,36 M58,28 L60,36" stroke="${symbolColor}" stroke-width="1.5" />`;
-  }
-
-  // Draw face outline (stylized coin design)
-  const faceSVG = `<circle cx="50" cy="50" r="16" fill="#E8C39E" stroke="#5E3F27" stroke-width="1.5"/>
-                   <path d="M46,46 L47,46 M54,46 L55,46" stroke="#5E3F27" stroke-dasharray="1" stroke-width="2" />
-                   <path d="M50,48 L50,53 L48,53" fill="none" stroke="#5E3F27" stroke-width="1.5" stroke-linecap="round"/>
-                   <path d="M46,58 C48,61 52,61 54,58" fill="none" stroke="#5E3F27" stroke-width="1.5" stroke-linecap="round"/>
-                   <path d="M34,50 C34,44 38,44 38,50" fill="none" stroke="#E8C39E" stroke="#5E3F27" stroke-width="1.5" />
-                   <path d="M66,50 C66,44 62,44 62,50" fill="none" stroke="#E8C39E" stroke="#5E3F27" stroke-width="1.5" />`;
-
-  // Draw Emperor beard or robes
-  let robeSVG = `<path d="M30,75 C30,62 40,62 50,62 C60,62 70,62 70,75 L70,85 L30,85 Z" fill="${symbolColor}" />
-                 <path d="M45,62 L50,72 L55,62" fill="none" stroke="#8A0000" stroke-width="2" />`;
-
-  if (hash % 2 === 0) { // Has beard
-    robeSVG = `<path d="M44,57 C44,67 56,67 56,57 L54,55 L46,55 Z" fill="#8C6239" />` + robeSVG;
-  }
-
-  // Cross symbol (crux gemmata) on the robe / crown or background
-  const symbolSVG = `<path d="M80,25 L80,35 M75,30 L85,30" stroke="${coinBorder}" stroke-width="2" stroke-linecap="round" />`;
-
-  // Construct SVG
-  return `
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="emperor-coin-svg">
-      <defs>
-        <radialGradient id="grad-${hash}" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="${bgGradientStart}" />
-          <stop offset="100%" stop-color="${bgGradientEnd}" />
-        </radialGradient>
-      </defs>
-      <circle cx="50" cy="50" r="46" fill="url(#grad-${hash})" stroke="${coinBorder}" stroke-width="3" />
-      <circle cx="50" cy="50" r="41" fill="none" stroke="${coinBorder}" stroke-width="1" stroke-dasharray="3 2" />
-      ${robeSVG}
-      ${faceSVG}
-      ${crownSVG}
-      ${symbolSVG}
-    </svg>
-  `;
-}
+// Note: getEmperorSVG was refactored and moved to utils.js to maintain pure data separation.
 
 const BYZANTINE_EMPERORS = [
   // 1. Dinasti Konstantinian (306–363)
@@ -2349,7 +2317,9 @@ const MAP_DATA = [
     description: "Kekaisaran Romawi Timur meliputi wilayah Semenanjung Balkan, Anatolia (Asia Kecil), Suriah, Palestina, dan Mesir. Wilayah ini sangat padat penduduk dan kaya raya dibandingkan wilayah barat.",
     byzantiumPathColor: "rgba(138, 43, 226, 0.6)", // Purple-ish
     highlights: ["Konstantinopel", "Antiokhia", "Aleksandria", "Thessaloniki", "Yerusalem"],
-    svgKey: "c4"
+    svgKey: "c4",
+    activeRegions: ["balkans", "anatolia", "levant", "egypt"],
+    opacity: 0.5
   },
   {
     century: "Abad ke-6 (500-599 M)",
@@ -2357,7 +2327,9 @@ const MAP_DATA = [
     description: "Puncak perluasan wilayah militer Romawi Timur. Di bawah kaisar Justinian I, Bizantium berhasil merebut kembali seluruh wilayah Italia, Afrika Utara (Carthage), Dalmatia, dan Spanyol Selatan dari tangan suku-suku Jermanik.",
     byzantiumPathColor: "rgba(138, 43, 226, 0.85)", // Strong Purple
     highlights: ["Konstantinopel", "Roma", "Ravenna", "Kartago", "Spanyol Selatan"],
-    svgKey: "c6"
+    svgKey: "c6",
+    activeRegions: ["balkans", "anatolia", "levant", "egypt", "italy", "nafrica", "spain"],
+    opacity: 0.5
   },
   {
     century: "Abad ke-8 (700-799 M)",
@@ -2365,7 +2337,9 @@ const MAP_DATA = [
     description: "Setelah ekspansi militer Muslim awal, Bizantium kehilangan wilayah Mesir, Suriah, dan Afrika Utara secara permanen. Wilayah menyusut drastis ke Anatolia barat, Thrace, dan wilayah terisolasi di Italia selatan/Sisilia.",
     byzantiumPathColor: "rgba(186, 85, 211, 0.7)", // Medium Purple
     highlights: ["Konstantinopel", "Thessaloniki", "Efesus", "Sirakusa", "Bari"],
-    svgKey: "c8"
+    svgKey: "c8",
+    activeRegions: ["balkans", "anatolia"],
+    opacity: 0.5
   },
   {
     century: "Abad ke-11 (1000-1099 M)",
@@ -2373,7 +2347,9 @@ const MAP_DATA = [
     description: "Setelah penaklukan Bulgaria oleh Basil II, batas kekaisaran di Balkan kembali mencapai Sungai Danube. Di timur, Armenia dan sebagian besar Suriah utara dianeksasi, mengembalikan Bizantium sebagai adidaya Mediterania Timur.",
     byzantiumPathColor: "rgba(138, 43, 226, 0.75)",
     highlights: ["Konstantinopel", "Ohrid", "Thessaloniki", "Antiokhia", "Bari"],
-    svgKey: "c11"
+    svgKey: "c11",
+    activeRegions: ["balkans", "anatolia"],
+    opacity: 0.5
   },
   {
     century: "Abad ke-13 (1200-1299 M)",
@@ -2381,7 +2357,9 @@ const MAP_DATA = [
     description: "Pasca penjarahan Konstantinopel oleh Perang Salib IV (1204 M), kekaisaran hancur menjadi serpihan negara kecil. Peta menggambarkan masa restorasi oleh Michael VIII Palaiologos dari Nicaea pada tahun 1261 M.",
     byzantiumPathColor: "rgba(218, 112, 214, 0.6)",
     highlights: ["Konstantinopel", "Nicaea", "Thessaloniki", "Mystras (Morea)"],
-    svgKey: "c13"
+    svgKey: "c13",
+    activeRegions: ["balkans", "anatolia"],
+    opacity: 0.3
   },
   {
     century: "Abad ke-15 (1400-1453 M)",
@@ -2389,7 +2367,9 @@ const MAP_DATA = [
     description: "Kekaisaran Bizantium telah menyusut secara mengenaskan menjadi hanya sebuah enklaf kota Konstantinopel yang dikelilingi wilayah Ottoman, ditambah beberapa pulau di Aegean dan Despotat Morea di Peloponnese.",
     byzantiumPathColor: "rgba(128, 0, 128, 0.9)", // Deep Purple
     highlights: ["Konstantinopel", "Mystras (Morea)"],
-    svgKey: "c15"
+    svgKey: "c15",
+    activeRegions: ["balkans"],
+    opacity: 0.15
   }
 ];
 
@@ -2399,7 +2379,8 @@ window.BYZANTINE_EMPERORS = BYZANTINE_EMPERORS;
 window.TIMELINE_EVENTS = TIMELINE_EVENTS;
 window.ACADEMIC_REFERENCES = ACADEMIC_REFERENCES;
 window.MAP_DATA = MAP_DATA;
-window.getEmperorSVG = getEmperorSVG;
+window.REGION_COORDS = REGION_COORDS;
+window.CITY_COORDS = CITY_COORDS;
 
 // Initialize chronology index (canonical order in array above)
 if (window.BizUtils) {
