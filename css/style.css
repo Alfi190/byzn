@@ -1833,3 +1833,251 @@ mark.search-highlight {
     opacity: 1;
   }
 }
+
+/* --- Epoch Dynasty Tree Layout --- */
+.epoch-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  margin-top: 2rem;
+  position: relative;
+}
+
+.epoch-column {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-speed) ease;
+  position: relative;
+}
+
+.epoch-column:hover {
+  border-color: var(--color-gold);
+  box-shadow: var(--shadow-md);
+}
+
+.epoch-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border-color);
+  width: 100%;
+  padding-bottom: 0.75rem;
+}
+
+.epoch-header h3 {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  color: var(--color-purple);
+  margin: 0;
+  letter-spacing: 0.05em;
+}
+
+[data-theme="dark"] .epoch-header h3 {
+  color: var(--color-gold);
+}
+
+.epoch-header .epoch-years {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.epoch-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* Successor Transitions in Tree */
+.tree-transition-line {
+  width: 2px;
+  height: 24px;
+  position: relative;
+  margin: 0 auto;
+}
+
+.tree-transition-line.peaceful {
+  background: var(--color-gold);
+}
+
+.tree-transition-line.conflict {
+  background: #A63A50; /* Red conflict line */
+}
+
+.transition-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.transition-indicator.peaceful {
+  background: var(--color-gold);
+  color: #1A001D;
+}
+
+.transition-indicator.conflict {
+  background: #A63A50;
+  color: white;
+}
+
+/* Epoch connecting arrows for Desktop */
+.epoch-connector-horizontal {
+  display: none; /* Will style or omit if spacing handles it */
+}
+
+@media (min-width: 992px) {
+  .epoch-column:not(:last-child)::after {
+    content: '\f105'; /* font awesome angle right */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    right: -1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-gold);
+    font-size: 1.5rem;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0.7;
+    animation: bounceRight 2s infinite;
+  }
+}
+
+@keyframes bounceRight {
+  0%, 100% { transform: translate(0, -50%); }
+  50% { transform: translate(5px, -50%); }
+}
+
+@media (max-width: 991.98px) {
+  .epoch-container {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+  .epoch-column:not(:last-child)::after {
+    content: '\f107'; /* font awesome angle down */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    bottom: -2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--color-gold);
+    font-size: 1.5rem;
+    z-index: 10;
+    pointer-events: none;
+    opacity: 0.7;
+    animation: bounceDown 2s infinite;
+  }
+}
+
+@keyframes bounceDown {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, 5px); }
+}
+
+/* --- Family Tree Diagram (Emperor Detail) --- */
+.family-tree-diagram {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  background: rgba(var(--color-purple-rgb), 0.03);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.family-tree-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.family-tree-connector-v {
+  width: 2px;
+  height: 20px;
+  background: var(--color-gold);
+  margin: 0 auto;
+}
+
+.family-tree-node {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  min-width: 120px;
+  max-width: 160px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-speed);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+.family-tree-node.active {
+  background: var(--gold-metallic);
+  color: #1A001D !important;
+  border-color: transparent;
+  font-weight: bold;
+  box-shadow: 0 4px 10px rgba(197, 155, 39, 0.3);
+}
+
+.family-tree-node.active span {
+  color: #1A001D !important;
+}
+
+.family-tree-node.link {
+  cursor: pointer;
+}
+
+.family-tree-node.link:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-gold);
+  box-shadow: var(--shadow-md);
+}
+
+.family-tree-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+  letter-spacing: 0.05em;
+  font-weight: bold;
+}
+
+.family-tree-node.active .family-tree-label {
+  color: rgba(26, 0, 29, 0.7);
+}
+
+.family-tree-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.family-tree-spouse-connector {
+  width: 20px;
+  height: 2px;
+  background: var(--color-gold);
+}

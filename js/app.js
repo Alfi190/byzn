@@ -379,6 +379,51 @@
 
     // --- UI Renderers Module ---
     ui: {
+      renderFamilyNode(nameStr, label, isActive = false, activeEmp = null) {
+        if (!nameStr) {
+          return `<div class="family-tree-node"><span class="family-tree-label">${escapeHTML(label)}</span><span class="family-member-badge text-muted">-</span></div>`;
+        }
+        
+        const trimmed = nameStr.trim();
+        if (trimmed === "Tidak diketahui" || trimmed === "Tidak ada" || trimmed === "Tidak menikah" || trimmed === "-") {
+          return `<div class="family-tree-node"><span class="family-tree-label">${escapeHTML(label)}</span><span class="family-member-badge text-muted">${escapeHTML(trimmed)}</span></div>`;
+        }
+        
+        if (isActive) {
+          return `<div class="family-tree-node active"><span class="family-tree-label">${escapeHTML(label)}</span><span class="family-tree-name"><i class="fas fa-crown text-gold me-1"></i>${escapeHTML(trimmed)}</span></div>`;
+        }
+        
+        const emp = findEmperorByName(trimmed, activeEmp);
+        if (emp) {
+          return `
+            <div class="family-tree-node link" onclick="window.location.hash='#/kaisar/${emp.id}'" title="Klik untuk profil ${escapeHTML(emp.name)}">
+              <span class="family-tree-label">${escapeHTML(label)}</span>
+              <span class="family-tree-name"><i class="fas fa-crown text-gold me-1"></i>${escapeHTML(trimmed)}</span>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="family-tree-node">
+              <span class="family-tree-label">${escapeHTML(label)}</span>
+              <span class="family-tree-name text-truncate" title="${escapeHTML(trimmed)}">${escapeHTML(trimmed)}</span>
+            </div>
+          `;
+        }
+      },
+
+      renderFamilyRow(fieldValue, label, activeEmp = null) {
+        if (!fieldValue || fieldValue === "Tidak diketahui" || fieldValue === "Tidak ada" || fieldValue === "Tidak menikah") {
+          return `<div class="family-tree-node"><span class="family-tree-label">${escapeHTML(label)}</span><span class="family-member-badge text-muted">${escapeHTML(fieldValue || '-')}</span></div>`;
+        }
+        
+        const names = fieldValue.split(/,|\b&\b|\bdan\b/);
+        return names.map(name => {
+          const trimmed = name.trim();
+          if (!trimmed) return "";
+          return this.renderFamilyNode(trimmed, label, false, activeEmp);
+        }).filter(html => html !== "").join("");
+      },
+
       initFloatingElements() {
         const backToTop = document.getElementById("back-to-top");
 
@@ -702,6 +747,50 @@
         const prevEmp = window.BYZANTINE_EMPERORS.find((e) => e.chronOrder === emp.chronOrder - 1);
         const nextEmp = window.BYZANTINE_EMPERORS.find((e) => e.chronOrder === emp.chronOrder + 1);
 
+        // Generate dynamic visual family tree diagram
+        const parentsNodes = this.renderFamilyRow(emp.familyTree.parents, "Orang Tua", emp);
+        const empActiveNode = this.renderFamilyNode(shortName, "Kaisar Aktif", true, emp);
+        
+        let spouseNodes = "";
+        if (emp.familyTree.spouse && emp.familyTree.spouse !== "Tidak menikah" && emp.familyTree.spouse !== "Tidak diketahui" && emp.familyTree.spouse !== "Tidak ada" && emp.familyTree.spouse !== "-") {
+          const spouses = emp.familyTree.spouse.split(/,|\b&\b|\bdan\b/);
+          spouseNodes = spouses.map(sp => {
+            const trimmed = sp.trim();
+            if (!trimmed) return "";
+            return `<div class="family-tree-spouse-connector"></div>` + this.renderFamilyNode(trimmed, "Pasangan", false, emp);
+          }).filter(html => html !== "").join("");
+        } else {
+          spouseNodes = `<div class="family-tree-spouse-connector"></div>` + this.renderFamilyNode(emp.familyTree.spouse || "Tidak menikah", "Pasangan", false, emp);
+        }
+
+        const childrenNodes = this.renderFamilyRow(emp.familyTree.children, "Anak-Anak", emp);
+
+        const familyTreeHtml = `
+          <div class="family-tree-diagram">
+            <!-- Row 1: Parents -->
+            <div class="family-tree-row">
+              ${parentsNodes}
+            </div>
+            
+            <!-- Vertical Connector -->
+            <div class="family-tree-connector-v"></div>
+            
+            <!-- Row 2: Active Emperor & Spouse -->
+            <div class="family-tree-row">
+              ${empActiveNode}
+              ${spouseNodes}
+            </div>
+            
+            <!-- Vertical Connector -->
+            <div class="family-tree-connector-v"></div>
+            
+            <!-- Row 3: Children -->
+            <div class="family-tree-row flex-wrap">
+              ${childrenNodes}
+            </div>
+          </div>
+        `;
+
         container.innerHTML = `
           <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
             <a href="#/database" onclick="if(history.length > 1){ event.preventDefault(); history.back(); }" class="btn btn-outline-purple"><i class="fas fa-arrow-left me-2"></i> Kembali</a>
@@ -786,27 +875,10 @@
             <div class="col-lg-4">
               <div class="family-relations-card mb-4">
                 <div class="card-imperial-header">
-                  <h3 class="h5 m-0 text-purple">Hubungan Keluarga</h3>
+                  <h3 class="h5 m-0 text-purple">Diagram Silsilah Keluarga</h3>
                 </div>
-                <div class="card-imperial-body p-0">
-                  <div class="family-relation-item">
-                    <span class="family-relation-header">Orang Tua</span>
-                    <div class="family-relation-content">
-                      ${this.parseFamilyMembers(emp.familyTree.parents)}
-                    </div>
-                  </div>
-                  <div class="family-relation-item">
-                    <span class="family-relation-header">Pasangan</span>
-                    <div class="family-relation-content">
-                      ${this.parseFamilyMembers(emp.familyTree.spouse)}
-                    </div>
-                  </div>
-                  <div class="family-relation-item">
-                    <span class="family-relation-header">Anak-Anak</span>
-                    <div class="family-relation-content">
-                      ${this.parseFamilyMembers(emp.familyTree.children)}
-                    </div>
-                  </div>
+                <div class="card-imperial-body">
+                  ${familyTreeHtml}
                 </div>
               </div>
 
@@ -826,7 +898,7 @@
                   <div class="roadmap-step">
                     <span class="roadmap-label">Pendahulu</span>
                     <div class="roadmap-node-box">
-                      ${this.parseFamilyMembers(emp.predecessor)}
+                      ${this.parseFamilyMembers(emp.predecessor, emp)}
                     </div>
                   </div>
                   
@@ -845,7 +917,7 @@
                   <div class="roadmap-step">
                     <span class="roadmap-label">Penerus</span>
                     <div class="roadmap-node-box">
-                      ${this.parseFamilyMembers(emp.successor)}
+                      ${this.parseFamilyMembers(emp.successor, emp)}
                     </div>
                   </div>
                 </div>
@@ -855,7 +927,7 @@
         `;
       },
 
-      parseFamilyMembers(fieldValue) {
+      parseFamilyMembers(fieldValue, activeEmp = null) {
         if (!fieldValue || fieldValue === "Tidak diketahui" || fieldValue === "Tidak ada" || fieldValue === "Tidak menikah") {
           return `<span class="family-member-badge text-muted">${fieldValue || '-'}</span>`;
         }
@@ -866,7 +938,7 @@
           const trimmed = name.trim();
           if (!trimmed) return "";
 
-          const emp = findEmperorByName(trimmed);
+          const emp = findEmperorByName(trimmed, activeEmp);
           if (emp) {
             return `<a href="#/kaisar/${emp.id}" class="family-member-badge member-link text-truncate" title="Klik untuk melihat profil ${emp.name}">
               <i class="fas fa-crown me-1 text-gold"></i>${trimmed}
@@ -881,23 +953,94 @@
         const container = document.getElementById("dynasty-tree-view");
         if (!container) return;
 
-        const nodes = window.BYZANTINE_DYNASTIES.map((d, index) => {
-          const connector = index > 0 ? '<div class="tree-connector"></div>' : "";
-          const count = window.BYZANTINE_EMPERORS.filter((e) => e.dynasty === d.id).length;
-          return `
-            ${connector}
-            <div class="tree-row">
-              <div class="tree-node" onclick="window.location.hash='#/dinasti/${d.id}'">
-                <span class="tree-node-order">${index + 1}</span>
-                <h4>${d.name.replace(/^Dinasti /, "")}</h4>
-                <p>${d.period}</p>
+        const EPOCHS = [
+          {
+            name: "Era Formasi & Konsolidasi",
+            years: "306–518 M",
+            dynastyIds: ["konstantinian", "valentinian", "theodosian", "leonid"]
+          },
+          {
+            name: "Restorasi & Transformasi",
+            years: "518–820 M",
+            dynastyIds: ["justinian", "heraclian", "isaurian", "nikephorian"]
+          },
+          {
+            name: "Zaman Emas & Krisis",
+            years: "820–1204 M",
+            dynastyIds: ["amorion", "makedonia", "doukas", "komnenos", "angelos"]
+          },
+          {
+            name: "Fragmentasi & Kejatuhan Akhir",
+            years: "1204–1453 M",
+            dynastyIds: ["laskarid", "palaiologos"]
+          }
+        ];
+
+        const TRANSITIONS = {
+          "konstantinian": { type: "peaceful", label: "Kaisar Julian gugur; Jovian terpilih" },
+          "valentinian": { type: "conflict", label: "Bencana Adrianopel; Valens gugur" },
+          "theodosian": { type: "peaceful", label: "Marcian wafat alami; Leo I terpilih" },
+          "leonid": { type: "peaceful", label: "Anastasius I wafat; Justin I terpilih" },
+          "justinian": { type: "conflict", label: "Maurice dikudeta & dibunuh Phocas" },
+          "heraclian": { type: "conflict", label: "Krisis 20 Tahun; Justinian II dibunuh" },
+          "isaurian": { type: "conflict", label: "Ratu Irene digulingkan Nikephoros I" },
+          "nikephorian": { type: "conflict", label: "Nikephoros I gugur; Leo V dikudeta" },
+          "amorion": { type: "conflict", label: "Michael III dibunuh Basil I" },
+          "makedonia": { type: "peaceful", label: "Garis keturunan habis; krisis Doukas" },
+          "doukas": { type: "conflict", label: "Krisis Manzikert; kudeta Alexios I" },
+          "komnenos": { type: "conflict", label: "Andronikos I digulingkan secara brutal" },
+          "angelos": { type: "conflict", label: "Perang Salib IV menjarah Konstantinopel" },
+          "laskarid": { type: "conflict", label: "John IV Laskaris dibutakan Michael VIII" }
+        };
+
+        let html = '<div class="epoch-container">';
+
+        EPOCHS.forEach((epoch) => {
+          html += `
+            <div class="epoch-column">
+              <div class="epoch-header">
+                <h3>${escapeHTML(epoch.name)}</h3>
+                <span class="epoch-years">${escapeHTML(epoch.years)}</span>
+              </div>
+              <div class="epoch-tree">
+          `;
+
+          epoch.dynastyIds.forEach((dynId, dynIdx) => {
+            const d = window.BYZANTINE_DYNASTIES.find((item) => item.id === dynId);
+            if (!d) return;
+
+            const count = window.BYZANTINE_EMPERORS.filter((e) => e.dynasty === d.id).length;
+            const chronOrderText = window.BYZANTINE_DYNASTIES.indexOf(d) + 1;
+
+            html += `
+              <div class="tree-node" onclick="window.location.hash='#/dinasti/${d.id}'" style="cursor:pointer; margin-bottom: 0.25rem;">
+                <span class="tree-node-order">${chronOrderText}</span>
+                <h4>${escapeHTML(d.name.replace(/^Dinasti /, ""))}</h4>
+                <p>${escapeHTML(d.period)}</p>
                 <span class="tree-node-count">${count} kaisar</span>
+              </div>
+            `;
+
+            const isLastInEpoch = dynIdx === epoch.dynastyIds.length - 1;
+            if (!isLastInEpoch) {
+              const trans = TRANSITIONS[dynId] || { type: "peaceful", label: "Suksesi" };
+              const transIcon = trans.type === "conflict" ? '<i class="fas fa-hand-fist"></i>' : '<i class="fas fa-crown"></i>';
+              html += `
+                <div class="tree-transition-line ${trans.type}" title="${escapeHTML(trans.label)}">
+                  <span class="transition-indicator ${trans.type}">${transIcon}</span>
+                </div>
+              `;
+            }
+          });
+
+          html += `
               </div>
             </div>
           `;
-        }).join("");
+        });
 
-        container.innerHTML = `<div class="tree-flow">${nodes}</div>`;
+        html += '</div>';
+        container.innerHTML = html;
       },
 
       renderTimeline() {

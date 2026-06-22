@@ -24,22 +24,29 @@
     });
   }
 
-  function findEmperorByName(nameStr) {
+  function findEmperorByName(nameStr, activeEmp = null) {
     if (!nameStr) return null;
     const searchName = nameStr.trim().toLowerCase().replace(/\s+the\s+[\w-]+/g, "").trim();
     
+    let match = null;
     // Constant time O(1) map lookup
     if (EMPEROR_MAP.has(searchName)) {
-      return EMPEROR_MAP.get(searchName);
-    }
-    
-    // Fallback search for partial name matches
-    for (const [key, emp] of EMPEROR_MAP.entries()) {
-      if (key.includes(searchName) || searchName.includes(key)) {
-        return emp;
+      match = EMPEROR_MAP.get(searchName);
+    } else {
+      // Fallback search for partial name matches
+      for (const [key, emp] of EMPEROR_MAP.entries()) {
+        if (key.includes(searchName) || searchName.includes(key)) {
+          match = emp;
+          break;
+        }
       }
     }
-    return null;
+    
+    if (match && activeEmp) {
+      const diff = Math.abs(match.startYear - activeEmp.startYear);
+      if (diff > 80) return null; // Reject cross-century false matches
+    }
+    return match;
   }
 
   function assignChronOrder() {
